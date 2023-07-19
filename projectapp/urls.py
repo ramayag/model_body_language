@@ -18,14 +18,14 @@ from django.urls import path, include
 from loginlogout.views import index
 # from loginlogout.main import set_global
 # from loginlogout.PoseDetector import *
-from loginlogout.main import Main 
+import loginlogout.main
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('loginlogout.urls')),
     # path('api/set-global/', set_global, name='set_global'),
-    path('api/runcode/', Main.main, name='run'),
+    path('api/runcode/', loginlogout.main.main, name='run'),
 
     path('', index, name="index"),
 ]
