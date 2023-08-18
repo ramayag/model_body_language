@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     # 'loginlogout.PoseDetector',
     'evaluation',
     'rest_auth', # new!
+    # 'channels',
+    # 'integers',
 ]
 
 MIDDLEWARE = [
@@ -76,7 +78,11 @@ TEMPLATES = [
     },
 ]
 
+ASGI_APPLICATION = "project.routing.application" #routing.py will be created later
+
+
 WSGI_APPLICATION = 'projectapp.wsgi.application'
+# ASGI_APPLICATION = 'projectapp.asgi.application'
 
 
 # Database
@@ -115,6 +121,12 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"  # You can use other backends like channels.layers.RedisChannelLayer
+    }
+}
 
 
 # Internationalization

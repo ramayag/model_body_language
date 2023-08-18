@@ -1,7 +1,6 @@
 
-from .motion import ReturnValueFact ,Tree , angle_L_sholder,angle_L_elbow , angle_R_sholder,\
-angle_R_elbow,Dist_Wrists_sholds,Dist_LSH_RW__LSH_LW,BodyPart_Lsh_Lw_x,BodyPart_Rsh_Rw_x,Dist_N_LW_LSH,\
-Dist_N_RW_RSH,Dist_N_LW_LSH,Y_RW_POS ,Y_LW_POS,direction_type ,OUT_BOX
+from .motion import ReturnValueFact ,Tree , angle_L_sholder,angle_L_elbow , angle_R_sholder,angle_R_elbow,Dist_Wrists_sholds,Dist_LSH_RW__LSH_LW,BodyPart_Lsh_Lw_x,BodyPart_Rsh_Rw_x,Dist_N_LW_LSH,\
+Dist_N_RW_RSH,Dist_N_LW_LSH,Y_RW_POS ,Y_LW_POS,direction_type ,OUT_BOX,Dist_RSH_Rw__RSH_RH ,Dist_LSH_Lw__LSH_LH,motion
 
 import math
 import cv2
@@ -15,6 +14,7 @@ from sqlalchemy import create_engine
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial import procrustes
+from fastdtw import fastdtw
 
 class in_out(Enum):
     inside_box = 0 
@@ -85,19 +85,7 @@ class more_functions :
         x = [point[1] for point in point_positions]
         y = [point[0] for point in point_positions]
 
-        # Calculate time values
-        # time = np.arange(0, len(point_positions) * time_step, time_step)
-
-        # Plot the periodic signal
-        # plt.plot(time, x)  # Flipped x-coordinates
-
-        # # Add labels and title to the plot
-        # plt.xlabel('Time')
-        # plt.ylabel('Amplitude')
-        # plt.title('Periodic Signal')
-
-        # # Display the plot
-        # plt.show()    
+  
         
         new_positions = [[x[i] + time_step, y[i] + time_step] for i in range(len(point_positions))]
         return new_positions
@@ -161,7 +149,7 @@ class more_functions :
     def strike_zone(self,imgRGB,L_sholder,R_sholder,R_wrist,L_wrist,x):
         
         dist = math.sqrt((L_sholder[0] - R_sholder[0]) ** 2 + (L_sholder[1] - R_sholder[1]) ** 2)
-        dist1=dist * (1/3)
+        dist1=dist * (1/2)
         dist2=dist * (1/4)
 
         
@@ -256,22 +244,79 @@ class more_functions :
         return max_key
 
 
+    def check_state(self , arra):
+        thresh = 8
+        array = arra[-9:]
+        length = len(array)
+        newest_80_percent = int(length * 0.8)
 
-    def motions_evaluations (self , motion_array):
+        # if length == 0:
+        #     return False
+
+        # Check if all elements are the same using set()
+        if len(set(array)) == 1:
+            return True
+
+        # Check if the newest 80% of elements are the same using set()
+        if len(set(array[-newest_80_percent:])) == 1:
+            return True
+
+        return False
+
+
+    def get_repeated_parts(self , arr, threshold):
+        repeated_parts = []
+        non_repeated_count = 0  # Count of non-repeated elements
+        current_part = [arr[0]]
+        count = 1
+
+        for i in range(1, len(arr)):
+            if arr[i] == arr[i - 1]:
+                count += 1
+                current_part.append(arr[i])
+            else:
+                if count >= threshold:
+                    repeated_parts.extend(current_part)
+                else:
+                    non_repeated_count += len(current_part)  # Increment non-repeated count
+                current_part = [arr[i]]
+                count = 1
+        
+        if count >= threshold:
+            repeated_parts.extend(current_part)
+        else:
+            non_repeated_count += len(current_part)  # Increment non-repeated count
+
+        return repeated_parts, non_repeated_count
+    
+
+
+    def motions_evaluations (self ,motion_array , thresh):
         counts = {}
         log_counts = {}
+        counts[motion.CORRECT_MOTION.name] = 0
+
+        # print (" befor log log log " + str (motion_array))
+        motion_array,correct_element =self.get_repeated_parts(motion_array ,thresh)
         for elem in motion_array:
             if elem in counts:
                 counts[elem] += 1
             else:
                 counts[elem] = 1
-        
+                
+        counts[motion.CORRECT_MOTION.name] += correct_element 
+
+                
         for key, value in counts.items():
-            # if value > 1:
-            #     print(f"{key} appears {value} times in the array.")
-            log_counts[key] = math.log(value*10)
+            if value > 0:  # Check if the value is valid for logarithm
+                log_counts[key] = math.log(value * 10)
+            else:
+                log_counts[key] = float('-inf')  # Handle invalid case (e.g., log of 0 or negative)
+        # print (" after  log log log " + str (motion_array))
+        # print (" the logarithem " + str (log_counts)  +str(motion_array))
 
         return log_counts   
+    
     
 
     def spatial_analysis(self , frames_landmarks):
@@ -340,7 +385,25 @@ class more_functions :
 # Example usage
 # landmark_tuples = [("frame1", landmark_array1), ("frame2", landmark_array2), ..., ("frameN", landmark_arrayN)]
 
+    def calculate_dtw_distance(self , landmarks_sequence):
+        best_element = None
+        best_distance = float('inf')
 
+        for i in range(len(landmarks_sequence)):
+            element = landmarks_sequence[i][1]  # Extract the keypoints from the tuple
+            current_distance = 0
+
+            for j in range(len(landmarks_sequence)):
+                if i != j:
+                    other_element = landmarks_sequence[j][1]  # Extract the keypoints from the other tuple
+                    distance, _ = fastdtw(element, other_element)  # Calculate DTW distance
+                    current_distance += distance
+
+            if current_distance < best_distance:
+                best_element = landmarks_sequence[i]  # Store the entire tuple
+                best_distance = current_distance
+
+        return best_element
 
 
 
@@ -363,6 +426,9 @@ class more_functions :
         distance_RSH_RW =math.dist(detector.R_wrist, detector.R_sholder)
         distance_LSH_LW =math.dist(detector.L_wrist, detector.L_sholder)
 
+        distance_RSH_RH = math.dist(detector.R_hip, detector.R_sholder)
+        distance_LSH_LH = math.dist(detector.L_hip, detector.L_sholder)
+
         distance_nose_RW =math.dist(detector.R_wrist, detector.Nose)
         distance_nose_LW =math.dist(detector.L_wrist, detector.Nose)
 
@@ -384,11 +450,11 @@ class more_functions :
         # var = more.turnR_L(image,detector.L_sholder,detector.R_sholder,detector.R_hip) 
         var=self.turnR_L(image,detector.L_sholder,detector.R_sholder,detector.R_hip)
         _ ,outside_box = self.strike_zone(blackie,detector.L_sholder,detector.R_sholder,detector.R_wrist,detector.L_wrist,var)                    
-
+        # print( "the out box " + str (outside_box))
         # _ ,Head = more.strike_zone(blackie,detector.LEFT_EAR,detector.RIGHT_EAR,detector.R_wrist,detector.L_wrist,var)                    
 
-        print ( "vaaaaaaaaaa " + str(var))
-        print("the out side isisisisisisisisiiisi" + str(outside_box))
+        # print ( "vaaaaaaaaaa " + str(var))
+        # print("the out side isisisisisisisisiiisi" + str(outside_box))
         
         # cv2.putText(image , str(var) ,(50,450),cv2.FONT_HERSHEY_PLAIN,2,(255,99,0),2)
 
@@ -396,6 +462,7 @@ class more_functions :
         #مكتف وعلى جنب 
         engine.reset()
         engine.declare(
+                OUT_BOX(out = str (outside_box)),
                 angle_L_sholder(angle1=L_sholder_angle),
                 angle_L_elbow(angle2=L_Wrist_angle),
                 angle_R_sholder(angle3=R_sholder_angle),
@@ -406,11 +473,15 @@ class more_functions :
                 BodyPart_Rsh_Rw_x(Rsh_x_pos=detector.R_sholder[0],Rw_x_pos = detector.R_wrist[0]),
                 Dist_N_LW_LSH(dist1 = distance_nose_LW,dist2 = distance_LSH_Nose),
                 Dist_N_RW_RSH(dist3 = distance_nose_RW,dist4 = distance_RSH_Nose),
+                Dist_RSH_Rw__RSH_RH(dist1=distance_RSH_RH,dist2=distance_RSH_RW),
+                Dist_LSH_Lw__LSH_LH(dist3=distance_LSH_LH,dist4=distance_LSH_LW),
                 Y_LW_POS(y_lw =detector.L_wrist[1] ,y_lsh = detector.L_sholder[1]),
                 Y_RW_POS(y_rw = detector.R_wrist[1],y_rsh = detector.R_sholder[1]),
                 direction_type(direct = var ),
+
+
             #  motion.BodyPart_L(Lsh_x_pos=MATCH.Lsh_x_pos,Lw_x_pos=MATCH.Lw_x_pos),
-                OUT_BOX(out = outside_box)
+                
                 )
         engine.run()   
 

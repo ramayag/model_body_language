@@ -50,18 +50,21 @@ class PoseDetector:
         
     def find_pose(self, img ,blackie, draw=True):
 #         ///// body
-        imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        
-        self.results = self.pose.process(imgRGB)
-        self.lm = self.results.pose_landmarks
-        self.lmPose  = self.mpPose.PoseLandmark
-#         /////// hand
-        self.results_hands = self.hands.process(imgRGB)
-        
+        try : 
+            imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            
+            self.results = self.pose.process(imgRGB)
+            self.lm = self.results.pose_landmarks
+            self.lmPose  = self.mpPose.PoseLandmark
+    #         /////// hand
+            self.results_hands = self.hands.process(imgRGB)
+            
 
-        if self.lm and draw:
-            self.draw_landmarks(img ,blackie)
-        
+            if self.lm and draw:
+                self.draw_landmarks(img ,blackie)
+        except Exception as e:
+            print('error:', e) 
+
         return img,blackie
         
     def draw_landmarks(self, img ,blackie, connections=None):
@@ -76,50 +79,52 @@ class PoseDetector:
         return self.R_sholder,self.R_hip,self.R_elbow,self.L_sholder,self.L_hip,self.L_elbow,self.L_wrist,self.R_wrist,self.L_wrist,self.Nose
 
     def Landmark_pos(self ,w ,h ):
-        R_sholder_X = int(self.lm.landmark[self.lmPose.RIGHT_SHOULDER ].x*w)
-        R_sholder_Y = int(self.lm.landmark[self.lmPose.RIGHT_SHOULDER].y*h)
-        self.R_sholder=[R_sholder_X ,R_sholder_Y]
+        try :
+            R_sholder_X = int(self.lm.landmark[self.lmPose.RIGHT_SHOULDER ].x*w)
+            R_sholder_Y = int(self.lm.landmark[self.lmPose.RIGHT_SHOULDER].y*h)
+            self.R_sholder=[R_sholder_X ,R_sholder_Y]
 
-        R_hip_X = int(self.lm.landmark[self.lmPose.RIGHT_HIP ].x*w)
-        R_hip_Y = int(self.lm.landmark[self.lmPose.RIGHT_HIP ].y*h)
-        self.R_hip=[R_hip_X ,R_hip_Y]
+            R_hip_X = int(self.lm.landmark[self.lmPose.RIGHT_HIP ].x*w)
+            R_hip_Y = int(self.lm.landmark[self.lmPose.RIGHT_HIP ].y*h)
+            self.R_hip=[R_hip_X ,R_hip_Y]
 
-        R_elbow_X = int(self.lm.landmark[self.lmPose.RIGHT_ELBOW ].x*w)
-        R_elbow_Y = int(self.lm.landmark[self.lmPose.RIGHT_ELBOW].y*h)
-        self.R_elbow=[R_elbow_X ,R_elbow_Y]
+            R_elbow_X = int(self.lm.landmark[self.lmPose.RIGHT_ELBOW ].x*w)
+            R_elbow_Y = int(self.lm.landmark[self.lmPose.RIGHT_ELBOW].y*h)
+            self.R_elbow=[R_elbow_X ,R_elbow_Y]
 
-        L_sholder_X = int(self.lm.landmark[self.lmPose.LEFT_SHOULDER ].x*w)
-        L_sholder_Y = int(self.lm.landmark[self.lmPose.LEFT_SHOULDER].y*h)
-        self.L_sholder=[L_sholder_X ,L_sholder_Y]
+            L_sholder_X = int(self.lm.landmark[self.lmPose.LEFT_SHOULDER ].x*w)
+            L_sholder_Y = int(self.lm.landmark[self.lmPose.LEFT_SHOULDER].y*h)
+            self.L_sholder=[L_sholder_X ,L_sholder_Y]
 
-        L_hip_X = int(self.lm.landmark[self.lmPose.LEFT_HIP ].x*w)
-        L_hip_Y = int(self.lm.landmark[self.lmPose.LEFT_HIP ].y*h)
-        self.L_hip=[L_hip_X ,L_hip_Y]
+            L_hip_X = int(self.lm.landmark[self.lmPose.LEFT_HIP ].x*w)
+            L_hip_Y = int(self.lm.landmark[self.lmPose.LEFT_HIP ].y*h)
+            self.L_hip=[L_hip_X ,L_hip_Y]
 
-        L_elbow_X = int(self.lm.landmark[self.lmPose.LEFT_ELBOW ].x*w)
-        L_elbow_Y = int(self.lm.landmark[self.lmPose.LEFT_ELBOW].y*h)
-        self.L_elbow=[L_elbow_X ,L_elbow_Y]
+            L_elbow_X = int(self.lm.landmark[self.lmPose.LEFT_ELBOW ].x*w)
+            L_elbow_Y = int(self.lm.landmark[self.lmPose.LEFT_ELBOW].y*h)
+            self.L_elbow=[L_elbow_X ,L_elbow_Y]
 
-        L_wrist_X = int(self.lm.landmark[self.lmPose.LEFT_WRIST ].x*w)
-        L_wrist_Y = int(self.lm.landmark[self.lmPose.LEFT_WRIST].y*h)
-        self.L_wrist=[L_wrist_X ,L_wrist_Y]
+            L_wrist_X = int(self.lm.landmark[self.lmPose.LEFT_WRIST ].x*w)
+            L_wrist_Y = int(self.lm.landmark[self.lmPose.LEFT_WRIST].y*h)
+            self.L_wrist=[L_wrist_X ,L_wrist_Y]
 
-        R_wrist_X = int(self.lm.landmark[self.lmPose.RIGHT_WRIST ].x*w)
-        R_wrist_Y = int(self.lm.landmark[self.lmPose.RIGHT_WRIST].y*h)
-        self.R_wrist=[R_wrist_X ,R_wrist_Y]
+            R_wrist_X = int(self.lm.landmark[self.lmPose.RIGHT_WRIST ].x*w)
+            R_wrist_Y = int(self.lm.landmark[self.lmPose.RIGHT_WRIST].y*h)
+            self.R_wrist=[R_wrist_X ,R_wrist_Y]
 
-        Nose_X = int(self.lm.landmark[self.lmPose.NOSE ].x*w)
-        Nose_Y = int(self.lm.landmark[self.lmPose.NOSE].y*h)
-        self.Nose=[Nose_X ,Nose_Y]
+            Nose_X = int(self.lm.landmark[self.lmPose.NOSE ].x*w)
+            Nose_Y = int(self.lm.landmark[self.lmPose.NOSE].y*h)
+            self.Nose=[Nose_X ,Nose_Y]
 
-        LEFT_EAR_X = int(self.lm.landmark[self.lmPose.LEFT_EAR ].x*w)
-        LEFT_EAR_Y = int(self.lm.landmark[self.lmPose.LEFT_EAR].y*h)
-        self.LEFT_EAR=[LEFT_EAR_X ,LEFT_EAR_Y]
+            LEFT_EAR_X = int(self.lm.landmark[self.lmPose.LEFT_EAR ].x*w)
+            LEFT_EAR_Y = int(self.lm.landmark[self.lmPose.LEFT_EAR].y*h)
+            self.LEFT_EAR=[LEFT_EAR_X ,LEFT_EAR_Y]
 
-        Right_EAR_X = int(self.lm.landmark[self.lmPose.RIGHT_EAR ].x*w)
-        Right_EAR_Y = int(self.lm.landmark[self.lmPose.RIGHT_EAR].y*h)
-        self.RIGHT_EAR=[Right_EAR_X ,Right_EAR_Y]
-
+            Right_EAR_X = int(self.lm.landmark[self.lmPose.RIGHT_EAR ].x*w)
+            Right_EAR_Y = int(self.lm.landmark[self.lmPose.RIGHT_EAR].y*h)
+            self.RIGHT_EAR=[Right_EAR_X ,Right_EAR_Y]
+        except Exception as e:
+            print('error 11:', e) 
 #         return R_sholder,R_hip,R_elbow,L_sholder,L_hip,L_elbow,L_wrist,R_wrist,L_wrist,Nose                
 
 
