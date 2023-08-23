@@ -22,7 +22,10 @@ from flask import Flask, request, jsonify, render_template, Response
 from flask_cors import CORS, cross_origin
 from flask_socketio import SocketIO, emit
 from .connection_database import DataBase
-
+import requests
+from django.middleware import csrf
+import base64
+import json
 
 
 app = Flask(__name__)
@@ -55,7 +58,7 @@ def check_value(result):
     #لا يوجد خطأ
     if result[0] == 'CORRECT_MOTION':
         print ( 'CORRECT_MOTION tuple tuple' + str ( result[1]  ))
-        print ( result[0] )
+        # print ( result[0] )
         x_var=(x_var+ result[1])
         return x_var
     else:
@@ -120,7 +123,7 @@ def process_list(lst, result,prev_char , z ):
 def run_with_soket(request):
     print('socket')
     # main(request)
-    socketio.run(app, host='192.168.1.103', port=8080)
+    socketio.run(app, host='192.168.1.103', port=8081)
     return JsonResponse({'total_eval': 255 })
     # socketio.stop()
 
@@ -142,7 +145,7 @@ def new(request):
 cap = cv2.VideoCapture(0)
 #
 # @csrf_exempt
-gl_elapsed_time, gl_frame_count, gl_motions_array, gl_count_sin=0,0,[],0
+gl_elapsed_time, gl_frame_count, gl_motions_array, gl_count_sin=0,0,['CORRECT_MOTION'],0
 
 def set_global_variables(elapsed_time, frame_count, motions_array, count_sin):
     global gl_elapsed_time, gl_frame_count, gl_motions_array, gl_count_sin
@@ -150,8 +153,57 @@ def set_global_variables(elapsed_time, frame_count, motions_array, count_sin):
     gl_frame_count = frame_count
     gl_motions_array = motions_array
     gl_count_sin = count_sin
-    print ( gl_elapsed_time , gl_frame_count ,gl_motions_array ,gl_count_sin)
+    # print ( gl_elapsed_time , gl_frame_count ,gl_motions_array ,gl_count_sin)
 
+
+@csrf_exempt
+def send_image(request):
+    if request.method == 'POST':
+        script_directory = os.path.dirname(os.path.abspath(__file__))
+        # Calculate the path to the image file based on the script's directory
+        image_path = os.path.join(script_directory, '..', 'plot.png')
+
+        api_url = "http://127.0.0.1:8000/api/upload_image"
+
+        # Create a dictionary to represent the data payload
+        csrf_token = csrf.get_token(request)
+
+        # Prepare data and files for the request
+        data = {
+            "key1": "value1",
+            "key2": "value2",
+        }
+
+        with open(image_path, "rb") as image_file:
+            files = {'image': (image_file.name, image_file, 'image/jpeg')}
+
+            # Include CSRF token in headers
+            headers = {"X-CSRFToken": csrf_token}
+
+            # Send the POST request with CSRF token in headers
+            response = requests.post(api_url, data=data, files=files, headers=headers)
+
+            # Process the response
+            response_data = {
+                "status_code": response.status_code,
+                "response_text": response.text,
+            }
+
+            # Parse the response JSON
+            response_json = json.loads(response.text)
+            image_data = response_json.get("image_data")
+
+            if image_data:
+                # Decode the base64 image data and save/process it as needed
+                decoded_image_data = base64.b64decode(image_data)
+                # Handle the decoded image data as per your requirement
+
+            response_data["image_data"] = image_data  # Add image_data to response_data
+
+        return JsonResponse(response_data)
+
+
+# @csrf_exempt
 @socketio.on('test')
 def main(reques):
     print(reques)
@@ -190,16 +242,16 @@ def main(reques):
     prev_motion = None
 
     motion_notes = {
-        'HAND_ON_HEAD': "Don't put your hand on your face .",
-        'HAND_CROSSED': "Don't keep your hands crossed.",
-        'HAND_ON_HIP': " Don't keep your hands on your waist .",
-        'STRAIGHT_DOWN': "Don't keep your hands at your sides .",
-        'CLOSED_U_HANDS': "Don't keep your hands folded.",
-        'CLOSED_D_HANDS': "Don't keep your hands in front of your groin area .",
-        'OUT_BOX': "Keep your hands in 'strike zone' as possible .",
-        'CORRECT_MOTION': "Keep going .. ",
-        'ON_SIDE': "You lean to the side, return your body to the audience .",
-        'VIBRATING_MOTION': "Try to take regular breaths, you seem a little tense ."
+        'HAND_ON_HEAD': "Don't put your hand on your face . :on_head",
+        'HAND_CROSSED': "Don't keep your hands crossed. : ",
+        'HAND_ON_HIP': " Don't keep your hands on your waist . :hand_on_waist ",
+        'STRAIGHT_DOWN': "Don't keep your hands at your sides . :handdown ",
+        'CLOSED_U_HANDS': "Don't keep your hands folded. :handcrossed2",
+        'CLOSED_D_HANDS': "Don't keep your hands in front of your groin area . :handcross ",
+        'OUT_BOX': "Keep your hands in 'strike zone' as possible . :zone ",
+        'CORRECT_MOTION': "Keep going .. :ok ",
+        'ON_SIDE': "You lean to the side, return your body to the audience . :side ",
+        'VIBRATING_MOTION': "Try to take regular breaths, you seem a little tense . : "
     }
 
     # global more
@@ -404,7 +456,7 @@ def main(reques):
 
     # #حساب التقييم لكل حركة
     thresh = 8
-    motion_count = more.motions_evaluations(motions_array, thresh)
+    # motion_count = more.motions_evaluations(motions_array, thresh)
     # print("Last the motions evaluation" +  str (motion_count))
 
     # request.session['motion_count'] = motion_count
@@ -741,7 +793,7 @@ def show_eval(request):
     global gl_count_sin
     count_sin = gl_count_sin
 
-    print(elapsed_time, frame_count, motions_array, count_sin)
+    # print(elapsed_time, frame_count, motions_array, count_sin)
 
     id = request.session.get('user_id', 0)
 
@@ -766,6 +818,7 @@ def show_eval(request):
         periodical = 0
 
     # Calculate motion evaluations
+    print('motion array befor error'  + str (motions_array))
     motion_count = more.motions_evaluations(motions_array, thresh)
 
     # print ( 'the motion array iss' + str (motions_array)  )
@@ -827,11 +880,15 @@ This indicates that you are nervous. Try to think about the content of the show 
     for motion, data in motion_data.items():
         if data['count'] > 1.5:
             note = data['note'].format(counter_value=data['count'])
-            notes.append(f"{motion}: Count={data['count']:.2f}, Note: {note}")
+            notes.append(f"{motion}: Count={data['count']:.1f}, Note: {note}")
         else:
-            notes.append(f"{motion}: Count={data['count']:.2f}, Note: ")
+            notes.append(f"{motion}: Count={data['count']:.1f}, Note: ")
 
     # total_eval = total_evaluation_using_fuzzy_sys ()
+# Extract non-zero count notes
+    non_zero_notes = [note for note in notes if 'Count=0.00' not in note]
+
+
 
     counts = {motion: data['count'] for motion, data in motion_data.items()}
     total_eval = total_evaluation_using_fuzzy_sys(counts)
@@ -839,5 +896,5 @@ This indicates that you are nervous. Try to think about the content of the show 
     DataBase.store_vedio_cols(path, frame_count, int(elapsed_time), 1, id)
     DataBase.store_Hands_cols(path, motion_data, elapsed_time)
 
-    return JsonResponse({'total_eval': total_eval, 'notes': notes})
+    return JsonResponse({'total_eval': total_eval, 'notes': non_zero_notes})
 

@@ -269,38 +269,55 @@ class DataBase :
 
         if 0 <= video_index < len(videos_for_user):
             specific_video = videos_for_user[video_index]
+            CLOSED_U_HANDS = specific_video.evaluation.handeval.CLOSED_U_HANDS
+            HAND_CROSSED = specific_video.evaluation.handeval.HAND_CROSSED
+            HAND_ON_HIP = specific_video.evaluation.handeval.HAND_ON_HIP
+            HAND_ON_HEAD = specific_video.evaluation.handeval.HAND_ON_HEAD
+            STRAIGHT_DOWN = specific_video.evaluation.handeval.STRAIGHT_DOWN
+            CLOSED_D_HANDS =  specific_video.evaluation.handeval.CLOSED_D_HANDS
+            OUT_BOX = specific_video.evaluation.handeval.OUT_BOX
+            CORRECT_MOTION = specific_video.evaluation.handeval.CORRECT_MOTION
+            ON_SIDE = specific_video.evaluation.handeval.ON_SIDE
+            VIBRATING_MOTION = specific_video.evaluation.handeval.VIBRATING_MOTION
+
+
+
         else:
             return JsonResponse({'message': 'Invalid video index'}, status=404)
+
+
+        
 
         video_data = {
             'size': specific_video.size,
             'time': specific_video.time,
             'title': specific_video.title,
             'date': specific_video.date,
+        
+
+
+            "total_eval": specific_video.evaluation.total_eval,
+             "notes" : [
+                f'CLOSED_U_HANDS : {CLOSED_U_HANDS}' ,
+                f'HAND_CROSSED : {HAND_CROSSED}' ,
+                f'HAND_ON_HIP : {HAND_ON_HIP}' ,
+                f'HAND_ON_HEAD : {HAND_ON_HEAD}' ,
+                f'STRAIGHT_DOWN : {STRAIGHT_DOWN}' ,
+                f'CLOSED_D_HANDS : {CLOSED_D_HANDS}' ,
+                f'OUT_BOX : {OUT_BOX}' ,
+                f'CORRECT_MOTION : {CORRECT_MOTION}' ,
+                f'ON_SIDE : {ON_SIDE}' ,
+                f'VIBRATING_MOTION : {VIBRATING_MOTION}' ,
+             ]
+            
         }
 
-        evaluation_data = {
-            'total_eval': specific_video.evaluation.total_eval,
-            'hand_eval': {
-                'CLOSED_U_HANDS': specific_video.evaluation.handeval.CLOSED_U_HANDS,
-                'HAND_CROSSED': specific_video.evaluation.handeval.HAND_CROSSED,
-                'HAND_ON_HIP': specific_video.evaluation.handeval.HAND_ON_HIP,
-                'HAND_ON_HEAD': specific_video.evaluation.handeval.HAND_ON_HEAD,
-                'STRAIGHT_DOWN': specific_video.evaluation.handeval.STRAIGHT_DOWN,
-                'CLOSED_D_HANDS': specific_video.evaluation.handeval.CLOSED_D_HANDS,
-                'OUT_BOX': specific_video.evaluation.handeval.OUT_BOX,
-                'CORRECT_MOTION': specific_video.evaluation.handeval.CORRECT_MOTION,
-                'ON_SIDE': specific_video.evaluation.handeval.ON_SIDE,
-                'VIBRATING_MOTION': specific_video.evaluation.handeval.VIBRATING_MOTION,
-            }
-        }
+        # response_data = {
+        #     'video_data': video_data,
+        #     'evaluation_data': evaluation_data,
+        # }
 
-        response_data = {
-            'video_data': video_data,
-            'evaluation_data': evaluation_data,
-        }
-
-        return JsonResponse(response_data)
+        return JsonResponse(video_data)
 
     def store_Hands_cols(path,motion_data,total_time):
         conn = sqlite3.connect(path)

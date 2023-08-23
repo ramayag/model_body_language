@@ -28,6 +28,7 @@ from loginlogout.main import main
 from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
 from django.urls import re_path
+from loginlogout import views 
 # import loginlogout.consumers
 
 
@@ -55,6 +56,9 @@ urlpatterns = [
     path('api/runcode/soket/', loginlogout.main.run_with_soket, name='soket'),
     path('api/runcode/disoket/', loginlogout.main.di_with_soket, name='disoket'),
     path('api/runcode/', main , name='run'),
+    path('api/send_image/', loginlogout.main.send_image, name='image'),
+    # path('api/upload_image', loginlogout.main.send_image , name='send_image'),
+    path('api/upload_image', views.upload_image_view, name='upload_image'),
     
     path('', index, name="index"),
 ]

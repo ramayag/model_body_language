@@ -244,23 +244,43 @@ class more_functions :
         return max_key
 
 
-    def check_state(self , arra):
+    # def check_state(self , arra):
+    #     thresh = 8
+    #     array = arra[-9:]
+    #     length = len(array)
+    #     newest_80_percent = int(length * 0.8)
+
+    #     # if length == 0:
+    #     #     return False
+
+    #     # Check if all elements are the same using set()
+    #     if len(set(array)) == 1:
+    #         return True
+
+    #     # Check if the newest 80% of elements are the same using set()
+    #     if len(set(array[-newest_80_percent:])) == 1:
+    #         return True
+
+    #     return False
+    def check_state(self, arra):
         thresh = 8
         array = arra[-9:]
         length = len(array)
-        newest_80_percent = int(length * 0.8)
+        newest_60_percent = int(length * 0.6)
 
-        # if length == 0:
-        #     return False
+        # Check if length is less than 2, return False
+        if length < 2:
+            return False
 
-        # Check if all elements are the same using set()
-        if len(set(array)) == 1:
-            return True
-
-        # Check if the newest 80% of elements are the same using set()
-        if len(set(array[-newest_80_percent:])) == 1:
-            return True
-
+        # Check if the last two elements are the same
+        if array[-1] == array[-2]:
+            # Count the occurrences of the most common element
+            most_common_element_count = array.count(array[-1])
+            
+            # Check if the most common element appears at least 60% of the time
+            if most_common_element_count / length >= 0.6:
+                return True
+        
         return False
 
 

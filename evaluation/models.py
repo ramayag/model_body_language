@@ -38,6 +38,11 @@ class HandEval(models.Model):
     STRAIGHT_DOWN = models.FloatField()
     CLOSED_D_HANDS = models.FloatField()
     OUT_BOX = models.FloatField()
+    CORRECT_MOTION =models.FloatField(default=False)
+    ON_SIDE =models.FloatField(default=False)
+    VIBRATING_MOTION = models.FloatField(default=False
+    )
+
     evaluation_id =  models.OneToOneField(Evaluation, on_delete=models.CASCADE)
 
 

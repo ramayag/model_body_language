@@ -19,7 +19,7 @@ from .connection_database import DataBase
 import time
 import os
 from django.http import JsonResponse
-
+import base64
 # from flask import Flask, request, jsonify, render_template, Response
 # from flask_cors import CORS, cross_origin
 # from flask_socketio import SocketIO, emit
@@ -34,9 +34,9 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+# from .views import store 
 
 
-# from .views import store
 
 
 class Record(generics.ListCreateAPIView):
@@ -63,9 +63,9 @@ class Login(generics.GenericAPIView):
             # Save the user's ID in the session
             request.session['user_id'] = user.id
             request.session.save()
-            print(request.session['user_id'])
+            print ( request.session['user_id'])
             return Response(serializer_class.data, status=HTTP_200_OK)
-
+            
         return Response(serializer_class.errors, status=HTTP_400_BAD_REQUEST)
 
 
@@ -80,6 +80,31 @@ class Logout(generics.GenericAPIView):
         return Response(serializer_class.errors, status=HTTP_400_BAD_REQUEST)
 
 
+
+@csrf_exempt
+def upload_image_view(request):
+    if request.method == 'POST':
+        # Process the uploaded image and any data here
+        # You can access the uploaded image using request.FILES['image']
+        
+        # Example: Save the uploaded image to a model or file system
+        uploaded_image = request.FILES['image']
+        # Save or process the image here
+        
+        # Read the image data and encode as base64
+        image_data = uploaded_image.read()
+        base64_image = base64.b64encode(image_data).decode('utf-8')
+        
+        # Construct the API response
+        api_response = {
+            "message": "Image uploaded successfully.",
+            "image_data": base64_image
+        }
+        
+        return JsonResponse(api_response)
+    else:
+        return JsonResponse({"error": "Invalid request method"}, status=400)
+    
 def index(request):
     return redirect('/api/login')
 

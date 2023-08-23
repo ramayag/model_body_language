@@ -5,5 +5,4 @@ urlpatterns = [
     path('addUser/', Record.as_view(), name="register"),
     path('login/', Login.as_view(), name="login"),
     path('logout/', Logout.as_view(), name="logout"),
-    # path('runcode/soket/',Logout.as_view(), name="soket")
 ]

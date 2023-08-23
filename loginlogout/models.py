@@ -11,3 +11,6 @@ class User(models.Model):
     def __str__(self):
         return "{} -{}".format(self.username, self.email)
 
+class Image(models.Model):
+
+    image_file = models.ImageField(upload_to='images/')
